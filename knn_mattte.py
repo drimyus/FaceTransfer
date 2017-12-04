@@ -3,6 +3,9 @@ import sklearn.neighbors
 import scipy.sparse
 import warnings
 
+import matplotlib.pyplot as plt
+import scipy.misc
+
 nn = 10
 
 
@@ -15,7 +18,7 @@ def knn_matte(img, trimap, mylambda=100):
 
     print('Finding nearest neighbors')
     a, b = np.unravel_index(np.arange(m*n), (m, n))
-    feature_vec = np.append(np.transpose(img.reshape(m*n,c)), [ a, b]/np.sqrt(m*m + n*n), axis=0).T
+    feature_vec = np.append(np.transpose(img.reshape(m*n, c)), [a, b] / np.sqrt(m*m + n*n), axis=0).T
     nbrs = sklearn.neighbors.NearestNeighbors(n_neighbors=10, n_jobs=4).fit(feature_vec)
     knns = nbrs.kneighbors(feature_vec)[1]
 
@@ -24,12 +27,12 @@ def knn_matte(img, trimap, mylambda=100):
     row_inds = np.repeat(np.arange(m*n), 10)
     col_inds = knns.reshape(m*n*10)
     vals = 1 - np.linalg.norm(feature_vec[row_inds] - feature_vec[col_inds], axis=1)/(c+2)
-    A = scipy.sparse.coo_matrix((vals, (row_inds, col_inds)),shape=(m*n, m*n))
+    A = scipy.sparse.coo_matrix((vals, (row_inds, col_inds)), shape=(m*n, m*n))
 
     D_script = scipy.sparse.diags(np.ravel(A.sum(axis=1)))
     L = D_script-A
-    D = scipy.sparse.diags(np.ravel(all_constraints[:,:, 0]))
-    v = np.ravel(foreground[:,:,0])
+    D = scipy.sparse.diags(np.ravel(all_constraints[:, :, 0]))
+    v = np.ravel(foreground[:, :, 0])
     c = 2*mylambda*np.transpose(v)
     H = 2*(L + mylambda*D)
 
@@ -45,15 +48,15 @@ def knn_matte(img, trimap, mylambda=100):
 
 
 def main():
-    img = scipy.misc.imread('donkey.png')[:,:,:3]
-    trimap = scipy.misc.imread('donkeyTrimap.png')[:,:,:3]
+    img = scipy.misc.imread('data/donkey.png')[:, :, :3]
+    trimap = scipy.misc.imread('data/donkeyTrimap.png')[:, :, :3]
     alpha = knn_matte(img, trimap)
     scipy.misc.imsave('donkeyAlpha.png', alpha)
     plt.title('Alpha Matte')
     plt.imshow(alpha, cmap='gray')
     plt.show()
 
+
 if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-    import scipy.misc
+
     main()
